@@ -5,11 +5,9 @@ let pageSize = 10;
 let detailModal, formModal;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Khởi tạo các Modal của Bootstrap
     detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
     formModal = new bootstrap.Modal(document.getElementById('formModal'));
 
-    // Gán sự kiện tìm kiếm với debounce (chờ 0.5s sau khi gõ xong mới gọi API)
     let searchTimer;
     document.getElementById('searchInput').addEventListener('input', (e) => {
         clearTimeout(searchTimer);
@@ -19,35 +17,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 500);
     });
 
-    // Thay đổi số lượng bản ghi mỗi trang
     document.getElementById('pageSize').addEventListener('change', (e) => {
         pageSize = parseInt(e.target.value);
         currentPage = 1;
         fetchData();
     });
 
-    // Điều hướng phân trang
     document.getElementById('btnPrev').onclick = () => { if(currentPage > 1) { currentPage--; fetchData(); }};
     document.getElementById('btnNext').onclick = () => { currentPage++; fetchData(); };
 
-    // Các nút chức năng khác
     document.getElementById('btnOpenCreate').onclick = openCreateModal;
     document.getElementById('btnSave').onclick = saveProduct;
     document.getElementById('btnExport').onclick = exportCSV;
 
-    // Sắp xếp local (theo Price hoặc Title)
     document.getElementById('headerTitle').onclick = () => sortLocal('title');
     document.getElementById('headerPrice').onclick = () => sortLocal('price');
 
     fetchData(); 
 });
 
-// Hàm lấy dữ liệu từ API (Sử dụng Server-side Pagination để load cực nhanh)
 async function fetchData() {
     const loader = document.getElementById('loading');
     const searchVal = document.getElementById('searchInput').value;
     
-    loader.classList.remove('d-none'); // Hiện loading
+    loader.classList.remove('d-none');
 
     try {
         const offset = (currentPage - 1) * pageSize;
@@ -59,7 +52,6 @@ async function fetchData() {
         
         const data = await response.json();
         
-        // XỬ LÝ LỖI DỮ LIỆU: API EscuelaJS thường trả về link ảnh lỗi [ "[\"url\"]" ]
         products = data.map(p => ({
             ...p,
             cleanImg: formatImageUrl(p.images)
@@ -73,15 +65,13 @@ async function fetchData() {
         document.getElementById('productTableBody').innerHTML = 
             `<tr><td colspan="6" class="text-center text-danger">Đã xảy ra lỗi khi tải dữ liệu.</td></tr>`;
     } finally {
-        loader.classList.add('d-none'); // Đảm bảo luôn ẩn loading kể cả khi lỗi
+        loader.classList.add('d-none'); 
     }
 }
 
-// Hàm làm sạch URL ảnh
 function formatImageUrl(images) {
     if (!images || images.length === 0) return 'https://placehold.co/100';
     let url = images[0];
-    // Xóa các ký tự [ ] " \ do lỗi định dạng của API
     url = url.replace(/[\[\]"\\]/g, ''); 
     if (!url.startsWith('http')) return 'https://placehold.co/100';
     return url;
@@ -104,7 +94,6 @@ function renderTable() {
         </tr>
     `).join('');
 
-    // Kích hoạt Tooltip hiển thị Description khi hover
     const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     tooltips.forEach(t => {
         const prod = products.find(p => p.id == t.closest('tr').cells[0].innerText);
@@ -116,12 +105,10 @@ function renderTable() {
 function updatePaginationUI(count) {
     document.getElementById('currentPageDisplay').innerText = currentPage;
     document.getElementById('btnPrev').parentElement.classList.toggle('disabled', currentPage === 1);
-    // Nếu số lượng lấy về ít hơn giới hạn pageSize thì là trang cuối
     document.getElementById('btnNext').parentElement.classList.toggle('disabled', count < pageSize);
     document.getElementById('pageInfo').innerText = `Trang ${currentPage} - Hiển thị tối đa ${pageSize} sản phẩm`;
 }
 
-// --- CHI TIẾT SẢN PHẨM ---
 function viewDetail(id) {
     const p = products.find(x => x.id === id);
     if (!p) return;
@@ -141,7 +128,6 @@ function viewDetail(id) {
     detailModal.show();
 }
 
-// --- TẠO MỚI & CHỈNH SỬA ---
 function openCreateModal() {
     document.getElementById('formModalTitle').innerText = "Tạo Sản Phẩm Mới";
     document.getElementById('productForm').reset();
@@ -194,7 +180,6 @@ async function saveProduct() {
     }
 }
 
-// --- EXPORT CSV ---
 function exportCSV() {
     let csv = "ID,Title,Price,Category\n";
     products.forEach(p => {
@@ -207,7 +192,6 @@ function exportCSV() {
     link.click();
 }
 
-// --- SORT LOCAL ---
 let sortState = { key: '', asc: true };
 function sortLocal(key) {
     sortState.asc = (sortState.key === key) ? !sortState.asc : true;
